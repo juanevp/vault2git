@@ -62,3 +62,5 @@ Location: github.com/AndreyNikiforov/vault2git
 - catch and handle exception thrown if vault directory name changed during commit history
 - remove vault 4 DLLs.
  
+ ## Daniel Low: Changes Since Fork ###
+ - Changed DLL to Vault 6 Standard
