@@ -21,61 +21,70 @@ namespace Vault2Git.CLI
         //[STAThread]
         private static void Main(string[] args)
         {
-            _logger.Info("Vault2Git -- converting history from Vault repositories to Git");
-            Console.InputEncoding = Encoding.UTF8;
-
-            //get configuration for branches
-            var paths = ConfigurationManager.AppSettings["Convertor.Paths"];
-            var pathPairs = paths.Split(';')
-                                 .ToDictionary(
-                                     pair =>
-                                         pair.Split('~')[1], pair => pair.Split('~')[0]
-                );
-
-            //parse params
-            var param = Params.Parse(args, pathPairs.Keys);
-
-            //get count from param
-            if (param.Errors.Any())
+            try
             {
-                foreach (var e in param.Errors)
-                    _logger.Error(e);
-                return;
+                _logger.Info("Vault2Git -- converting history from Vault repositories to Git");
+                Console.InputEncoding = Encoding.UTF8;
+
+                //get configuration for branches
+                var paths = ConfigurationManager.AppSettings["Convertor.Paths"];
+                var pathPairs = paths.Split(';')
+                                     .ToDictionary(
+                                         pair =>
+                                             pair.Split('~')[1], pair => pair.Split('~')[0]
+                    );
+
+                //parse params
+                var param = Params.Parse(args, pathPairs.Keys);
+
+                //get count from param
+                if (param.Errors.Any())
+                {
+                    foreach (var e in param.Errors)
+                        _logger.Error(e);
+                    return;
+                }
+
+                _logger.Info("   use Vault2Git --help to get additional info");
+
+                _useConsole = param.UseConsole;
+                _useCapsLock = param.UseCapsLock;
+                _ignoreLabels = param.IgnoreLabels;
+
+
+                _logger.Debug("initialising processor.");
+                var processor = new Processor
+                                {
+                                    WorkingFolder = ConfigurationManager.AppSettings["Convertor.WorkingFolder"],
+                                    GitCmd = ConfigurationManager.AppSettings["Convertor.GitCmd"],
+                                    GitDomainName = ConfigurationManager.AppSettings["Git.DomainName"],
+                                    VaultServer = ConfigurationManager.AppSettings["Vault.Server"],
+                                    VaultRepository = ConfigurationManager.AppSettings["Vault.Repo"],
+                                    VaultUser = ConfigurationManager.AppSettings["Vault.User"],
+                                    VaultPassword = ConfigurationManager.AppSettings["Vault.Password"],
+                                    Progress = ShowProgress,
+                                    SkipEmptyCommits = param.SkipEmptyCommits
+                                };
+
+                _logger.Debug("pulling request");
+                processor.Pull
+                    (
+                        pathPairs.Where(p => param.Branches.Contains(p.Key))
+                        , 0 == param.Limit ? 999999999 : param.Limit
+                    );
+                
+                if (!_ignoreLabels)
+                {
+                    _logger.Debug("creating tags from labels");
+                    processor.CreateTagsFromLabels();
+                }
+
+                _logger.Info("Vault2Git life ended. Game over.");
             }
-
-            _logger.Info("   use Vault2Git --help to get additional info");
-
-            _useConsole = param.UseConsole;
-            _useCapsLock = param.UseCapsLock;
-            _ignoreLabels = param.IgnoreLabels;
-
-
-            _logger.Debug("initialising processor.");
-            var processor = new Processor
-                            {
-                                WorkingFolder = ConfigurationManager.AppSettings["Convertor.WorkingFolder"],
-                                GitCmd = ConfigurationManager.AppSettings["Convertor.GitCmd"],
-                                GitDomainName = ConfigurationManager.AppSettings["Git.DomainName"],
-                                VaultServer = ConfigurationManager.AppSettings["Vault.Server"],
-                                VaultRepository = ConfigurationManager.AppSettings["Vault.Repo"],
-                                VaultUser = ConfigurationManager.AppSettings["Vault.User"],
-                                VaultPassword = ConfigurationManager.AppSettings["Vault.Password"],
-                                Progress = ShowProgress,
-                                SkipEmptyCommits = param.SkipEmptyCommits
-                            };
-
-            _logger.Debug("pulling request");
-            processor.Pull
-                (
-                    pathPairs.Where(p => param.Branches.Contains(p.Key))
-                    , 0 == param.Limit ? 999999999 : param.Limit
-                );
-
-
-            if (!_ignoreLabels)
+            catch (Exception exception)
             {
-                _logger.Debug("creating tags from labels");
-                processor.CreateTagsFromLabels();
+                _logger.Error(string.Format("Exception occurred in main program. Exception : {0}\nStackTrace: {1}",
+                    exception.GetBaseException(), exception.StackTrace));
             }
         }
 
