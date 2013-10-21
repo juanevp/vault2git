@@ -87,7 +87,7 @@ namespace Vault2Git.Lib
             int ticks = 0;
             //get git current branch
             string gitCurrentBranch;
-            ticks += GitCurrentBranch(out gitCurrentBranch);
+            ticks += _gitProcessor.GitCurrentBranch(GitCmd, WorkingFolder, out gitCurrentBranch);
 
             //reorder target branches to start from current (to avoid checkouts)
             var targetList =
@@ -175,7 +175,7 @@ namespace Vault2Git.Lib
                         if (0 == counter%GitGarbageCollectionInterval)
                         {
                             _logger.Debug(String.Format("interval {0} reached. calling garbage collector", GitGarbageCollectionInterval));
-                            ticks = GitTriggerGarbageCollection();
+                            ticks = _gitProcessor.GitTriggerGarbageCollection(GitCmd, WorkingFolder);
                             if (null != Progress)
                                 if (Progress(PROGRESS_SPECIAL_VERSION_GC, ticks))
                                     return true;
@@ -196,7 +196,7 @@ namespace Vault2Git.Lib
                 //complete
                 ticks += VaultLogout();
                 //finalize git (update server info for dumb clients)
-                ticks += GitFinalize();
+                ticks += _gitProcessor.GitFinalize(GitCmd, WorkingFolder);
                 if (null != Progress)
                     Progress(PROGRESS_SPECIAL_VERSION_FINALIZE, ticks);
             }
@@ -337,27 +337,18 @@ namespace Vault2Git.Lib
                 out qryToken);
 
 
-            ServerOperations.client.ClientInstance.GetLabelQueryItems_Recursive(qryToken,
-                0,
-                (int) rowsRetRecur,
-                out labelItems);
+            ServerOperations.client.ClientInstance.GetLabelQueryItems_Recursive(qryToken, 0, (int) rowsRetRecur, out labelItems);
+            
             try
             {
-                int ticks = 0;
-
-                foreach (VaultLabelItemX currItem in labelItems)
-                {
-                    if (!_txidMappings.ContainsKey(currItem.TxID))
-                        continue;
-
-                    string gitCommitId = _txidMappings.First(s => s.Key.Equals(currItem.TxID)).Value;
-
-                    if (!string.IsNullOrEmpty(gitCommitId))
-                    {
-                        string gitLabelName = Regex.Replace(currItem.Label, "[\\W]", "_");
-                        ticks += GitAddTag(currItem.TxID + "_" + gitLabelName, gitCommitId, currItem.Comment);
-                    }
-                }
+                int ticks = (from currItem in labelItems
+                             where _txidMappings.ContainsKey(currItem.TxID)
+                             let gitCommitId = _txidMappings.First(s => s.Key.Equals(currItem.TxID)).Value
+                             where !string.IsNullOrEmpty(gitCommitId)
+                             let gitLabelName = Regex.Replace(currItem.Label, "[\\W]", "_")
+                             select _gitProcessor.GitAddTag(this,
+                                 string.Format("{0}_{1}", currItem.TxID, gitLabelName),
+                                 gitCommitId, currItem.Comment)).Sum();
 
                 //add ticks for git tags
                 if (null != Progress)
@@ -368,7 +359,7 @@ namespace Vault2Git.Lib
                 //complete
                 ServerOperations.client.ClientInstance.EndLabelQuery(qryToken);
                 VaultLogout();
-                GitFinalize();
+                _gitProcessor.GitFinalize(GitCmd, WorkingFolder);
             }
             return true;
         }
@@ -465,7 +456,7 @@ namespace Vault2Git.Lib
         {
             string[] msgs;
             //get info
-            var ticks = GitLog(gitBranch, out msgs);
+            var ticks = _gitProcessor.GitLog(this, gitBranch, out msgs);
             //get vault version
             currentVersion = GetVaultVersionFromGitLogMessage(msgs);
             return ticks;
@@ -482,7 +473,7 @@ namespace Vault2Git.Lib
                 ticks += _gitProcessor.RunGitCommand(WorkingFolder, GitCmd, string.Format(GitProcessor.GIT_CHECKOUT_CMD, gitBranch), string.Empty, out msgs);
                 //confirm current branch (sometimes checkout failed)
                 string currentBranch;
-                ticks += GitCurrentBranch(out currentBranch);
+                ticks += _gitProcessor.GitCurrentBranch(GitCmd, WorkingFolder, out currentBranch);
                 if (gitBranch.Equals(currentBranch, StringComparison.OrdinalIgnoreCase))
                     break;
                 if (tries > 5)
@@ -491,7 +482,7 @@ namespace Vault2Git.Lib
             return ticks;
         }
 
-        private int VaultFinalize(string vaultRepoPath)
+        private static int VaultFinalize(string vaultRepoPath)
         {
             //unset working folder
             return UnSetVaultWorkingFolder(vaultRepoPath);
@@ -500,7 +491,7 @@ namespace Vault2Git.Lib
         private int GitCommit(string vaultLogin, long vaultTrxid, string gitDomainName, string vaultCommitMessage, DateTime commitTimeStamp)
         {
             string gitCurrentBranch;
-            GitCurrentBranch(out gitCurrentBranch);
+            _gitProcessor.GitCurrentBranch(GitCmd, WorkingFolder, out gitCurrentBranch);
 
             string[] msgs;
             var ticks = _gitProcessor.RunGitCommand(WorkingFolder, GitCmd, GitProcessor.GIT_ADD_CMD, string.Empty, out msgs);
@@ -526,14 +517,6 @@ namespace Vault2Git.Lib
                 gitCommitId = gitCommitId.Substring(0, gitCommitId.Length - 1);
                 _txidMappings.Add(vaultTrxid, gitCommitId);
             }
-            return ticks;
-        }
-
-        private int GitCurrentBranch(out string currentBranch)
-        {
-            string[] msgs;
-            var ticks = _gitProcessor.RunGitCommand(WorkingFolder, GitCmd, GitProcessor.GIT_BRANCH_CMD, string.Empty, out msgs);
-            currentBranch = msgs.First(s => s.StartsWith("*")).Substring(1).Trim();
             return ticks;
         }
 
@@ -566,34 +549,7 @@ namespace Vault2Git.Lib
             long.TryParse(versionTrxTag.Split('/').First(), out version);
             return version;
         }
-
-        private int GitLog(string gitBranch, out string[] msg)
-        {
-            return _gitProcessor.RunGitCommand(WorkingFolder, GitCmd, string.Format(GitProcessor.GIT_LAST_COMMIT_INFO_CMD, gitBranch), string.Empty, out msg);
-        }
-
-        private int GitAddTag(string gitTagName, string gitCommitId, string gitTagComment)
-        {
-            string[] msg;
-            return _gitProcessor.RunGitCommand(WorkingFolder, GitCmd, string.Format(GitProcessor.GIT_ADD_TAG_CMD, gitTagName, gitCommitId, gitTagComment),
-                string.Empty,
-                out msg);
-        }
-
-        private int GitTriggerGarbageCollection()
-        {
-            _logger.Trace("running GitGarbageCollection()");
-            string[] msg;
-            return _gitProcessor.RunGitCommand(WorkingFolder, GitCmd, GitProcessor.GIT_GC_CMD, string.Empty, out msg);
-        }
-
-        private int GitFinalize()
-        {
-            _logger.Trace("running GitFinalise()");
-            string[] msg;
-            return _gitProcessor.RunGitCommand(WorkingFolder, GitCmd, GitProcessor.GIT_FINALIZER, string.Empty, out msg);
-        }
-
+        
         private int SetVaultWorkingFolder(string repoPath)
         {
             var ticks = Environment.TickCount;
