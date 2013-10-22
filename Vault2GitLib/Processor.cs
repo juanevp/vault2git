@@ -142,6 +142,7 @@ namespace Vault2Git.Lib
                                  .Where(f => !f.Contains("~"))
                                  .ToList()
                                  .ForEach(f => ticks += RemoveSccFromSln(f));
+
                         //change all csproj files
                         Directory.GetFiles(
                             WorkingFolder,
@@ -151,6 +152,7 @@ namespace Vault2Git.Lib
                                  .Where(f => !f.Contains("~"))
                                  .ToList()
                                  .ForEach(f => ticks += RemoveSccFromCsProj(f));
+
                         //change all vdproj files
                         Directory.GetFiles(
                             WorkingFolder,
@@ -160,8 +162,10 @@ namespace Vault2Git.Lib
                                  .Where(f => !f.Contains("~"))
                                  .ToList()
                                  .ForEach(f => ticks += RemoveSccFromVdProj(f));
+
                         //get vault version info
                         var info = vaultVersions[version.Key];
+
                         //commit
                         ticks += GitCommit(info.Login, info.TrxId, GitDomainName,
                             BuildCommitMessage(vaultRepoPath, version.Key, info), info.TimeStamp);
@@ -254,16 +258,21 @@ namespace Vault2Git.Lib
         /// <returns></returns>
         public static int RemoveSccFromCsProj(string filePath)
         {
+            _logger.Trace("attempting to remove SSC from " + filePath);
             var ticks = Environment.TickCount;
             var doc = new XmlDocument();
             try
             {
-                doc.Load(filePath);
+                var xmlString = Regex.Replace(File.ReadAllText(filePath), "&(?!(amp|apos|quot|lt|gt);)", "&amp;");
+                doc.LoadXml(xmlString);
                 while (true)
                 {
                     var nav = doc.CreateNavigator().SelectSingleNode("//*[starts-with(name(), 'Scc')]");
+
                     if (null == nav)
-                        break;
+                    {
+                        break; //none found, exiting
+                    }
                     nav.DeleteSelf();
                 }
                 doc.Save(filePath);
@@ -459,6 +468,7 @@ namespace Vault2Git.Lib
             var ticks = _gitProcessor.GitLog(this, gitBranch, out msgs);
             //get vault version
             currentVersion = GetVaultVersionFromGitLogMessage(msgs);
+            _logger.Trace("current vault version retrieved is " + currentVersion);
             return ticks;
         }
 

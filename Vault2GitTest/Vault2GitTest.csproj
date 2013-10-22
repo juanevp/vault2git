@@ -83,6 +83,9 @@
     <Content Include="data\result.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="data\testWithAmpersand.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="libs\NUnit-2.5.1.9189\nunit.framework.dll" />
     <Content Include="libs\Rhino-Mocks-net-3.5-v3.5\acknowledgements.txt" />
     <Content Include="libs\Rhino-Mocks-net-3.5-v3.5\license.txt" />

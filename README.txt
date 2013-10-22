@@ -65,3 +65,4 @@ Location: github.com/AndreyNikiforov/vault2git
  ## Daniel Low: Changes Since Fork ###
  - Changed DLL to Vault 6 Standard
  - Refactored some code to improve readability (needs more work though)
+ - Fixed defect relating to "&" in csproj

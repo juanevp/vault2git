@@ -2,8 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
 using NUnit.Framework;
 using System.IO;
+using Vault2Git.Lib;
 
 namespace Vault2GitTest
 {
@@ -32,6 +36,13 @@ namespace Vault2GitTest
             {
                 File.Delete(tempFile);
             }
+        }
+
+        [Test]
+        public void ReadingXmlDocumentWithAmpersandDoesNotThrowException()
+        {
+            const string FILE_PATH = "/data/XlnTelecom.csproj";
+            Processor.RemoveSccFromCsProj(FILE_PATH);
         }
     }
 }
