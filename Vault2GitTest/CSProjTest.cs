@@ -41,8 +41,8 @@ namespace Vault2GitTest
         [Test]
         public void ReadingXmlDocumentWithAmpersandDoesNotThrowException()
         {
-            const string FILE_PATH = "/data/XlnTelecom.csproj";
-            Processor.RemoveSccFromCsProj(FILE_PATH);
+            const string FILE_PATH = @"data\testWithAmpersand.xml";
+            Assert.DoesNotThrow(() => Processor.RemoveSccFromCsProj(FILE_PATH));
         }
     }
 }
