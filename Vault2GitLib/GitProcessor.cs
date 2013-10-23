@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using VaultClientOperationsLib;
 
 namespace Vault2Git.Lib
 {
@@ -21,7 +20,7 @@ namespace Vault2Git.Lib
         internal int GitAddTag(Processor processor, string gitTagName, string gitCommitId, string gitTagComment)
         {
             string[] msg;
-            return RunGitCommand(processor.WorkingFolder, processor.GitCmd, string.Format(GitProcessor.GIT_ADD_TAG_CMD, gitTagName, gitCommitId, gitTagComment),
+            return RunGitCommand(processor.WorkingFolder, processor.GitCmd, string.Format(GIT_ADD_TAG_CMD, gitTagName, gitCommitId, gitTagComment),
                 string.Empty,
                 out msg);
         }

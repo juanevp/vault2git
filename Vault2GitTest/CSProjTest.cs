@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml;
-using System.Xml.Linq;
-using NUnit.Framework;
 using System.IO;
+using NUnit.Framework;
 using Vault2Git.Lib;
 
 namespace Vault2GitTest
@@ -26,7 +20,7 @@ namespace Vault2GitTest
             try
             {
                 File.Copy(initialFile, tempFile, true);
-                Vault2Git.Lib.Processor.RemoveSccFromCsProj(tempFile);
+                Processor.RemoveSccFromCsProj(tempFile);
                 string result = File.ReadAllText(tempFile);
                 string expectedResult = File.ReadAllText(resultFile);
                 Console.WriteLine(result);

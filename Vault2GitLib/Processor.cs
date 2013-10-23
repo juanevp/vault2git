@@ -131,8 +131,11 @@ namespace Vault2Git.Lib
                     var counter = 0;
                     foreach (var version in versionsToProcess)
                     {
+                        _logger.Info(string.Format("performing actions for version: {0}", version));
                         //get vault version
                         ticks = VaultGet(vaultRepoPath, version.Key, version.Value.TrxId);
+
+                        _logger.Trace(string.Format("modifying all sln files for version: {0}", version));
                         //change all sln files
                         Directory.GetFiles(
                             WorkingFolder,
@@ -143,6 +146,7 @@ namespace Vault2Git.Lib
                                  .ToList()
                                  .ForEach(f => ticks += RemoveSccFromSln(f));
 
+                        _logger.Trace(string.Format("modifying all CSPROJ files for version: {0}", version));
                         //change all csproj files
                         Directory.GetFiles(
                             WorkingFolder,
@@ -153,6 +157,7 @@ namespace Vault2Git.Lib
                                  .ToList()
                                  .ForEach(f => ticks += RemoveSccFromCsProj(f));
 
+                        _logger.Trace(string.Format("modifying all VDPROJ files for version: {0}", version));
                         //change all vdproj files
                         Directory.GetFiles(
                             WorkingFolder,
@@ -167,6 +172,7 @@ namespace Vault2Git.Lib
                         var info = vaultVersions[version.Key];
 
                         //commit
+                        _logger.Trace("committing to git version: " + version);
                         ticks += GitCommit(info.Login, info.TrxId, GitDomainName,
                             BuildCommitMessage(vaultRepoPath, version.Key, info), info.TimeStamp);
 
@@ -347,7 +353,7 @@ namespace Vault2Git.Lib
 
 
             ServerOperations.client.ClientInstance.GetLabelQueryItems_Recursive(qryToken, 0, (int) rowsRetRecur, out labelItems);
-            
+
             try
             {
                 int ticks = (from currItem in labelItems
@@ -395,7 +401,8 @@ namespace Vault2Git.Lib
             }
             catch (Exception exception)
             {
-                _logger.Error(String.Format("Exception occurred when grabbing from vault.\nException {0}", exception.GetBaseException()));
+                _logger.Debug(String.Format("Exception occurred when grabbing from vault.\nException: {0}", exception.GetBaseException()));
+                _logger.Trace(String.Format("StackTrace: {0}", exception.StackTrace));
                 // System.Exception: $/foo/bar/baz has no working folder set.
                 // happens if a directory name changed. 
                 // therefore, if an Exception happened try to get the commit outside of the working folder.
@@ -559,7 +566,7 @@ namespace Vault2Git.Lib
             long.TryParse(versionTrxTag.Split('/').First(), out version);
             return version;
         }
-        
+
         private int SetVaultWorkingFolder(string repoPath)
         {
             var ticks = Environment.TickCount;

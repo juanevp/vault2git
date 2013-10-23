@@ -1,20 +1,18 @@
 ﻿<VisualStudioProject>
   <CSHARP
-    ProjectType = "Web"
-        ProductVersion = "7.10.3077"
-        SchemaVersion = "2.0"
-        ProjectGuid = "{6C718A49-B208-45F4-9BD0-C1994FE06088}"
-        SccProjectName = "SAK"
-        SccLocalPath = "SAK"
-        SccAuxPath = "SAK"
-        SccProvider = "SAK">
+    ProjectType="Web"
+    ProductVersion="7.10.3077"
+    SchemaVersion="2.0"
+    ProjectGuid="{6C718A49-B208-45F4-9BD0-C1994FE06088}"
+    SccProjectName="SAK"
+    SccLocalPath="SAK"
+    SccAuxPath="SAK"
+    SccProvider="SAK">
     <File
-                    RelPath = "_img\unlimitedanytime.PNG"
-                    BuildAction = "Content"
-                />
+      RelPath="_img\unlimitedanytime.PNG"
+      BuildAction="Content" />
     <File
-                    RelPath = "_img\T&C.txt"
-                    BuildAction = "Content"
-                />
+      RelPath="_img\T&C.txt"
+      BuildAction="Content" />
   </CSHARP>
 </VisualStudioProject>

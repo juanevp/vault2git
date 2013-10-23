@@ -72,7 +72,7 @@ namespace Vault2Git.CLI
                         pathPairs.Where(p => param.Branches.Contains(p.Key))
                         , 0 == param.Limit ? 999999999 : param.Limit
                     );
-                
+
                 if (!_ignoreLabels)
                 {
                     _logger.Debug("creating tags from labels");
