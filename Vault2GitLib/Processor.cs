@@ -131,11 +131,11 @@ namespace Vault2Git.Lib
                     var counter = 0;
                     foreach (var version in versionsToProcess)
                     {
-                        _logger.Info(string.Format("performing actions for version: {0}", version));
+                        _logger.Info(string.Format("performing actions for version: {0}", version.Key));
                         //get vault version
                         ticks = VaultGet(vaultRepoPath, version.Key, version.Value.TrxId);
 
-                        _logger.Trace(string.Format("modifying all sln files for version: {0}", version));
+                        _logger.Trace(string.Format("modifying all sln files for version: {0}", version.Key));
                         //change all sln files
                         Directory.GetFiles(
                             WorkingFolder,
@@ -146,7 +146,7 @@ namespace Vault2Git.Lib
                                  .ToList()
                                  .ForEach(f => ticks += RemoveSccFromSln(f));
 
-                        _logger.Trace(string.Format("modifying all CSPROJ files for version: {0}", version));
+                        _logger.Trace(string.Format("modifying all CSPROJ files for version: {0}", version.Key));
                         //change all csproj files
                         Directory.GetFiles(
                             WorkingFolder,
@@ -172,7 +172,7 @@ namespace Vault2Git.Lib
                         var info = vaultVersions[version.Key];
 
                         //commit
-                        _logger.Trace("committing to git version: " + version);
+                        _logger.Trace("committing to git version: " + version.Key);
                         ticks += GitCommit(info.Login, info.TrxId, GitDomainName,
                             BuildCommitMessage(vaultRepoPath, version.Key, info), info.TimeStamp);
 
@@ -420,6 +420,7 @@ namespace Vault2Git.Lib
                         Recursive = true
                     },
                     WorkingFolder);
+                _logger.Debug("successfully grabbed from outside working folder instead");
             }
 
             //now process deletions, moves, and renames (due to vault bug)
