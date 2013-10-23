@@ -84,7 +84,7 @@ namespace Vault2Git.CLI
             catch (Exception exception)
             {
                 _logger.Error(string.Format("Exception occurred in main program. Exception : {0}\nStackTrace: {1}",
-                    exception.GetBaseException(), exception.StackTrace));
+                    exception.GetBaseException().Message, exception.StackTrace));
             }
         }
 

@@ -285,7 +285,7 @@ namespace Vault2Git.Lib
             }
             catch (Exception exception)
             {
-                _logger.Error("Failed to remove SCC from csproj for {0}.\nException {1}", filePath, exception.GetBaseException());
+                _logger.Error("Failed to remove SCC from csproj for {0}.\nException {1}", filePath, exception.GetBaseException().Message);
             }
             return Environment.TickCount - ticks;
         }
@@ -401,7 +401,7 @@ namespace Vault2Git.Lib
             }
             catch (Exception exception)
             {
-                _logger.Debug(String.Format("Exception occurred when grabbing from vault.\nException: {0}", exception.GetBaseException()));
+                _logger.Debug(String.Format("Exception occurred when grabbing from vault.\nException: {0}", exception.GetBaseException().Message));
                 _logger.Trace(String.Format("StackTrace: {0}", exception.StackTrace));
                 // System.Exception: $/foo/bar/baz has no working folder set.
                 // happens if a directory name changed. 
