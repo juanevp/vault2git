@@ -47,16 +47,18 @@ Additional actions
 	dumb server (e.g. read-only http sharing with iis)
 
 Vault labels conversion
+
 	Vault labels support a lot more characters than git tags. For compatibility, all non alphanumeric characters for
 	git tags are replaced with "_". Git tag can only be created if the related git commit exists. Vault labels
 	comments are added as git tag comments.
 
 Known Issues
-	1)  "The specified path, file name, or both are too long. The fully qualified file name must be less than 260 characters, 
-		and the directory name must be less than 248 characters" - this relates to .Net framework and Windows limitation. Vault
-		does not stop you creating a deep rooted folder path but this becomes a problem when parsing over the framework. Only way
-		that I am aware of is to 'cloak' the offending folder. This ofcourse affects the outcome, but at least it keeps the rest of the
-		repo running if you keep in the mind your folder may be out of sync.
+
+	1.  "The specified path, file name, or both are too long. The fully qualified file name must be less than 260 characters, and the directory name must be less than 248 characters" 
+		-	this relates to .Net framework and Windows limitation. 
+			Vault does not stop you creating a deep rooted folder path but this becomes a problem when parsing over the framework. 
+			Only way that I am aware of is to 'cloak' the offending folder. 
+			This ofcourse affects the outcome, but at least it keeps the rest of the repo running if you keep in the mind your folder may be out of sync.
 		
 
 Last Updated: 2011-04-06
@@ -70,7 +72,7 @@ Location: github.com/AndreyNikiforov/vault2git
 - catch and handle exception thrown if vault directory name changed during commit history
 - remove vault 4 DLLs.
  
- ## Daniel Low: Changes Since Fork ###
+## Daniel Low: Changes Since Fork ###
  - Changed DLL to Vault 6 Standard
  - Refactored some code to improve readability (needs more work though)
  - Fixed defect relating to "&" in csproj
